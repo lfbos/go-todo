@@ -1,4 +1,5 @@
-# TODO LIST APP
+# SIMPLE TODO LIST APP 
+## Go (chi) + React + Mongo
 
 ### Execute and test
 
