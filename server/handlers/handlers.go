@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/lfbos/go-todo/server/data"
 	"net/http"
 )
@@ -89,12 +90,23 @@ func SettingsMiddleware(next http.Handler) http.Handler {
 
 func (rs ToDoListResource) Routes() chi.Router {
 	router := chi.NewRouter()
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+
 	router.Use(middleware.Logger)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(SettingsMiddleware)
+	router.Use(c.Handler)
 
 	router.Route("/api/task", func(r chi.Router) {
 		r.Get("/", rs.ListTasks)

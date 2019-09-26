@@ -68,8 +68,6 @@ func GetTasks() []primitive.M {
 
 	cur.Close(context.Background())
 
-	fmt.Println(results)
-
 	return results
 }
 
