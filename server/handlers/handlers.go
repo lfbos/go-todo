@@ -98,11 +98,25 @@ func (rs ToDoListResource) DeleteTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs ToDoListResource) LoginUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Login User"))
+	user, err := data.GetUserByCredentials(r.Body)
+
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	json.NewEncoder(w).Encode(user)
 }
 
 func (rs ToDoListResource) SignUpUser(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Sign Up User"))
+	user, err := data.CreateUser(r.Body)
+
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	json.NewEncoder(w).Encode(user)
 }
 
 func SettingsMiddleware(next http.Handler) http.Handler {

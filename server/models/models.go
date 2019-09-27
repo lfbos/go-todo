@@ -15,4 +15,17 @@ type User struct {
 	Email    string             `json:"email,omitempty" bson:"email,omitempty"`
 	Name     string             `json:"name,omitempty" bson:"name,omitempty"`
 	LastName string             `json:"lastName,omitempty" bson:"lastName,omitempty"`
+	Password string             `json:"password,omitempty" bson:"password,omitempty"`
+}
+
+type LoginUser struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserRegister struct {
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	LastName string `json:"lastName"`
+	Token    string `json:"token"`
 }

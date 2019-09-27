@@ -1,8 +1,11 @@
 import React, {useState} from 'react'
 import {Button, Form, Grid, Header, Message, Segment} from 'semantic-ui-react'
 import {Link} from "react-router-dom";
-import {fakeAuth} from "../auth";
 import {Redirect} from "react-router";
+import axios from "axios";
+import {auth} from "../auth";
+
+const LOGIN_URL = "http://localhost:8080/login";
 
 const LoginForm = () => {
     const [redirectToReferrer, setRedirectToReferrer] = useState(false);
@@ -14,8 +17,13 @@ const LoginForm = () => {
 
         if (email.trim().length === 0 || password.trim().length === 0) return false;
 
-        fakeAuth.authenticate(() => {
-            setRedirectToReferrer(true);
+        axios.post(LOGIN_URL, {email, password}).then(resp => {
+            const {data: {token}} = resp;
+            localStorage.setItem('token', token);
+
+            auth.authenticate(() => {
+                setRedirectToReferrer(true);
+            });
         });
     };
 
