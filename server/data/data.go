@@ -16,8 +16,10 @@ import (
 const connectionString = "mongodb://localhost:27017"
 const dbName = "test"
 const collName = "todos"
+const collUserName = "users"
 
 var collection *mongo.Collection
+var userCollection *mongo.Collection
 
 func init() {
 
@@ -41,6 +43,7 @@ func init() {
 	fmt.Println("Connected to MongoDB!")
 
 	collection = client.Database(dbName).Collection(collName)
+	userCollection = client.Database(dbName).Collection(collUserName)
 
 	fmt.Println("Collection instance created!")
 }
@@ -173,4 +176,16 @@ func DeleteTask(task string) (models.ToDoList, error) {
 	}
 
 	return result, nil
+}
+
+func GetUser(user string) error {
+	id, _ := primitive.ObjectIDFromHex(user)
+	filter := bson.M{"_id": id}
+	err := userCollection.FindOne(context.Background(), filter).Decode(&models.User{})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

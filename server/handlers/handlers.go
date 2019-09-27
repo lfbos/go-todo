@@ -24,7 +24,7 @@ func init() {
 
 	tokenAuth = jwtauth.New("HS256", []byte(secretKey), nil)
 
-	_, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"_id": 123, "name": "Luis", "lastName": "Boscan"})
+	_, tokenString, _ := tokenAuth.Encode(jwt.MapClaims{"_id": "123", "name": "Luis", "lastName": "Boscan"})
 	fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString)
 }
 
@@ -97,6 +97,14 @@ func (rs ToDoListResource) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 }
 
+func (rs ToDoListResource) LoginUser(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Login User"))
+}
+
+func (rs ToDoListResource) SignUpUser(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Sign Up User"))
+}
+
 func SettingsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Context-Type", "application/json")
@@ -110,6 +118,11 @@ func SettingsMiddleware(next http.Handler) http.Handler {
 func CustomAuthenticator(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
+		claims := jwt.MapClaims{}
+
+		jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
+			return nil, nil
+		})
 
 		if err != nil {
 			http.Error(w, http.StatusText(401), 401)
@@ -118,6 +131,15 @@ func CustomAuthenticator(next http.Handler) http.Handler {
 
 		if token == nil || !token.Valid {
 			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+
+		fmt.Println(claims["_id"])
+
+		err = data.GetUser(claims["_id"].(string))
+
+		if err != nil {
+			http.Error(w, http.StatusText(404), 404)
 			return
 		}
 
@@ -160,6 +182,11 @@ func (rs ToDoListResource) Routes() chi.Router {
 				r.Delete("/", rs.DeleteTask)
 			})
 		})
+	})
+
+	router.Group(func(r chi.Router) {
+		r.Post("/login", rs.LoginUser)
+		r.Post("/signup", rs.SignUpUser)
 	})
 
 	return router
