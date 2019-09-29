@@ -19,3 +19,17 @@ export const getUserFullName = () => {
 
     return `${name.trim()} ${lastName.trim()}`;
 };
+
+export const getUserID = () => {
+    const token = localStorage.getItem('token');
+
+    if (token === null) {
+        return '';
+    }
+
+    const data = parseJwt(token);
+
+    const {_id} = data;
+
+    return _id;
+};

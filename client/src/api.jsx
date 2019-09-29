@@ -1,4 +1,5 @@
 import axios from "axios";
+import {getUserID} from "./utils";
 
 const BASE_URL = "http://localhost:3030";
 const TASK_API_URL = `${BASE_URL}/api/task/`;
@@ -55,7 +56,7 @@ const createTask = task => {
         return null;
     }
 
-    return axios.post(TASK_API_URL, {task}, {
+    return axios.post(TASK_API_URL, {task, user: getUserID()}, {
         headers: {
             'Authorization': `Bearer ${token}`
         }

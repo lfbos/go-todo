@@ -31,15 +31,49 @@ func init() {
 type ToDoListResource struct{}
 
 func (rs ToDoListResource) ListTasks(w http.ResponseWriter, r *http.Request) {
-	tasks := data.GetTasks()
+	token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
+	claims := jwt.MapClaims{}
+
+	jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
+		return nil, nil
+	})
+
+	if err != nil {
+		http.Error(w, http.StatusText(401), 401)
+		return
+	}
+
+	if token == nil || !token.Valid {
+		http.Error(w, http.StatusText(401), 401)
+		return
+	}
+
+	tasks := data.GetTasks(claims["_id"].(string))
 
 	json.NewEncoder(w).Encode(tasks)
 }
 
 func (rs ToDoListResource) GetTask(w http.ResponseWriter, r *http.Request) {
+	token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
+	claims := jwt.MapClaims{}
+
+	jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
+		return nil, nil
+	})
+
+	if err != nil {
+		http.Error(w, http.StatusText(401), 401)
+		return
+	}
+
+	if token == nil || !token.Valid {
+		http.Error(w, http.StatusText(401), 401)
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 
-	task, err := data.GetTask(id)
+	task, err := data.GetTask(id, claims["_id"].(string))
 
 	if err != nil {
 		http.Error(w, http.StatusText(404), 404)

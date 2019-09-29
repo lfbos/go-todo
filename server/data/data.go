@@ -61,8 +61,11 @@ func init() {
 	fmt.Println("Collection instance created!")
 }
 
-func GetTasks() []primitive.M {
-	cur, err := collection.Find(context.Background(), bson.D{{}})
+func GetTasks(user string) []primitive.M {
+	userID, _ := primitive.ObjectIDFromHex(user)
+	filter := bson.M{"user": userID}
+
+	cur, err := collection.Find(context.Background(), filter)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,9 +90,10 @@ func GetTasks() []primitive.M {
 	return results
 }
 
-func GetTask(task string) (*models.ToDoList, error) {
+func GetTask(task, user string) (*models.ToDoList, error) {
 	id, _ := primitive.ObjectIDFromHex(task)
-	filter := bson.M{"_id": id}
+	userID, _ := primitive.ObjectIDFromHex(user)
+	filter := bson.M{"_id": id, "user": userID}
 
 	var result models.ToDoList
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
