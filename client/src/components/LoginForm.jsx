@@ -2,33 +2,34 @@ import React, {useState} from 'react'
 import {Button, Form, Grid, Header, Message, Segment} from 'semantic-ui-react'
 import {Link} from "react-router-dom";
 import {Redirect} from "react-router";
-import axios from "axios";
-import {auth} from "../auth";
 
-const LOGIN_URL = "http://localhost:8080/login";
+import {auth} from "../auth";
+import api from "../api";
 
 const LoginForm = () => {
-    const [redirectToReferrer, setRedirectToReferrer] = useState(false);
+    const [redirectToReferrer, setRedirectToReferrer] = useState(auth.isAuthenticated);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
 
         if (email.trim().length === 0 || password.trim().length === 0) return false;
 
-        axios.post(LOGIN_URL, {email, password}).then(resp => {
-            const {data: {token}} = resp;
-            localStorage.setItem('token', token);
+        try {
+            const response = await api.login({email, password});
+            const {data: {token}} = response;
 
-            auth.authenticate(() => {
+            auth.authenticate(token, () => {
                 setRedirectToReferrer(true);
             });
-        });
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
     if (redirectToReferrer === true) {
-        return <Redirect to='/' />;
+        return <Redirect to='/'/>;
     }
 
     return (
@@ -57,7 +58,8 @@ const LoginForm = () => {
                             required
                         />
 
-                        <Button type="submit" color='teal' fluid size='large' disabled={email.trim().length === 0 || password.trim().length === 0}>
+                        <Button type="submit" color='teal' fluid size='large'
+                                disabled={email.trim().length === 0 || password.trim().length === 0}>
                             Login
                         </Button>
                     </Segment>

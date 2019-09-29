@@ -1,10 +1,10 @@
 import React, {useState} from 'react'
-import {Button, Divider, Form, Grid, Header, Label, Message, Segment} from 'semantic-ui-react'
+import {Button, Divider, Form, Grid, Header, Message, Segment} from 'semantic-ui-react'
 import {Link, Redirect} from "react-router-dom";
 
-import axios from "axios";
+import {auth} from "../auth";
+import api from "../api";
 
-const SIGNUP_URL = "http://localhost:8080/signup";
 
 const RegisterForm = () => {
     const [data, setData] = useState({
@@ -14,17 +14,22 @@ const RegisterForm = () => {
         password: '',
         repeatPassword: ''
     });
-    const [redirect, setRedirect] = useState(false);
+    const [redirect, setRedirect] = useState(auth.isAuthenticated);
 
-    const onSubmit = () => {
+    const onSubmit = async (e) => {
+        e.preventDefault();
+
         if (!isValid()) return false;
 
         const requestData = {...data};
         delete requestData.repeatPassword;
 
-        axios.post(SIGNUP_URL, requestData).then(() => {
+        try {
+            await api.register(requestData);
             setRedirect(true);
-        });
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
     const onChange = e => {
@@ -36,7 +41,6 @@ const RegisterForm = () => {
     };
 
     const isValid = () => {
-        console.log(data);
         const {name, lastName, email, password, repeatPassword} = data;
 
         if (name.trim().length === 0 || lastName.trim().length === 0 || email.trim().length === 0 || password.trim().length === 0 || repeatPassword.trim().length === 0) {

@@ -148,8 +148,6 @@ func CustomAuthenticator(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println(claims["_id"])
-
 		err = data.GetUser(claims["_id"].(string))
 
 		if err != nil {

@@ -1,9 +1,7 @@
 import React, {Component} from "react";
-import axios from "axios";
 import {Card, Form, Header, Icon, Input} from "semantic-ui-react";
+import api from "../api";
 
-let BASE_URL = "http://localhost:8080";
-let TASK_API_URL = `${BASE_URL}/api/task/`;
 
 class ToDoList extends Component {
     constructor(props) {
@@ -16,7 +14,7 @@ class ToDoList extends Component {
     }
 
     componentDidMount() {
-        this.getTask();
+        this.getTasks();
     }
 
     onChange = event => {
@@ -25,25 +23,27 @@ class ToDoList extends Component {
         });
     };
 
-    onSubmit = () => {
+    onSubmit = async (e) => {
+        e.preventDefault();
+
         let {task} = this.state;
 
         if (task) {
-            axios
-                .post(TASK_API_URL, {task})
-                .then(() => {
-                    this.getTask();
-                    this.setState({
-                        task: ""
-                    });
-                });
+            await api.createTask(task);
+
+            this.getTasks();
+            this.setState({
+                task: ""
+            });
         }
     };
 
-    getTask = () => {
-        axios.get(TASK_API_URL).then(res => {
+    getTasks = async () => {
+        try {
+            const response = await api.getTasks();
+
             this.setState({
-                items: res.data.map(item => {
+                items: response.data.map(item => {
                     let color = "yellow";
 
                     if (item.status) {
@@ -101,30 +101,36 @@ class ToDoList extends Component {
                     );
                 })
             });
-        });
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
-    completeTask = id => {
-        axios
-            .post(`${TASK_API_URL}${id}/complete`)
-            .then(() => {
-                this.getTask();
-            });
+    completeTask = async id => {
+        try {
+            await api.completeTask(id);
+            this.getTasks();
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
-    undoTask = id => {
-        axios
-            .post(`${TASK_API_URL}${id}/undo`)
-            .then(() => {
-                this.getTask();
-            });
+    undoTask = async id => {
+        try {
+            await api.undoTask(id);
+            this.getTasks();
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
-    deleteTask = id => {
-        axios.delete(`${TASK_API_URL}${id}`)
-            .then(() => {
-                this.getTask();
-            });
+    deleteTask = async id => {
+        try {
+            await api.deleteTask(id);
+            this.getTasks();
+        } catch (e) {
+            /* Add sweet alert */
+        }
     };
 
     render() {

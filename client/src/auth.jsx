@@ -1,8 +1,8 @@
 export const auth = {
-    isAuthenticated: false,
+    isAuthenticated: localStorage.getItem('token') !== null,
     authenticate(token, cb) {
         localStorage.setItem('token', token);
-        this.isAuthenticated = localStorage.getItem('token') !== null;
+        this.isAuthenticated = true;
         setTimeout(cb, 100)
     },
     signout(cb) {
