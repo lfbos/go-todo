@@ -99,7 +99,7 @@ func GetTask(task, user string) (*models.ToDoList, error) {
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Task not found")
 	}
 
 	return &result, nil
@@ -110,13 +110,13 @@ func CreateTask(body io.ReadCloser) (*models.ToDoList, error) {
 	err := json.NewDecoder(body).Decode(&task)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error creating task check the body")
 	}
 
 	res, err := collection.InsertOne(context.Background(), task)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error inserting the task")
 	}
 
 	var result models.ToDoList
@@ -125,7 +125,7 @@ func CreateTask(body io.ReadCloser) (*models.ToDoList, error) {
 	err = collection.FindOne(context.Background(), filter).Decode(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting the new task")
 	}
 
 	return &result, nil
@@ -140,14 +140,14 @@ func CompleteTask(task string) (*models.ToDoList, error) {
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Task does not exists, check the task id")
 	}
 
 	var result models.ToDoList
 	err = collection.FindOne(context.Background(), filter).Decode(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting the task")
 	}
 
 	return &result, nil
@@ -162,14 +162,14 @@ func UndoTask(task string) (*models.ToDoList, error) {
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Task does not exists, check the task id")
 	}
 
 	var result models.ToDoList
 	err = collection.FindOne(context.Background(), filter).Decode(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting the task")
 	}
 
 	return &result, nil
@@ -183,13 +183,13 @@ func DeleteTask(task string) (*models.ToDoList, error) {
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Task does not exist")
 	}
 
 	_, err = collection.DeleteOne(context.Background(), filter)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error deleting the task")
 	}
 
 	return &result, nil
@@ -201,7 +201,7 @@ func GetUser(user string) error {
 	err := userCollection.FindOne(context.Background(), filter).Decode(&models.User{})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("User does not exist")
 	}
 
 	return nil
@@ -215,13 +215,13 @@ func GetUserByCredentials(body io.ReadCloser) (*models.UserRegister, error) {
 	filter := bson.M{"email": loginUser.Email}
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Empty information or invalid email")
 	}
 
 	err = userCollection.FindOne(context.Background(), filter).Decode(&user)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("User does not exist, check your credentials information")
 	}
 
 	if !utils.ComparePassword(user.Password, []byte(loginUser.Password)) {
@@ -255,7 +255,7 @@ func CreateUser(body io.ReadCloser) (*models.UserRegister, error) {
 	err := json.NewDecoder(body).Decode(&user)
 
 	if err != nil {
-		fmt.Println(err)
+		return nil, fmt.Errorf("Error body request")
 	}
 
 	secretKey := os.Getenv("SECRET_KEY")
@@ -271,7 +271,7 @@ func CreateUser(body io.ReadCloser) (*models.UserRegister, error) {
 	res, err := userCollection.InsertOne(context.Background(), user)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error creating the task")
 	}
 
 	user.ID = res.InsertedID.(primitive.ObjectID)

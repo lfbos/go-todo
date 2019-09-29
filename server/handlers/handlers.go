@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth"
+	"github.com/ifreddyrondon/bastion/render"
 	"github.com/lfbos/go-todo/server/data"
 	"net/http"
 	"os"
@@ -31,22 +32,12 @@ func init() {
 type ToDoListResource struct{}
 
 func (rs ToDoListResource) ListTasks(w http.ResponseWriter, r *http.Request) {
-	token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
+	token, _ := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
 	claims := jwt.MapClaims{}
 
 	jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
 		return nil, nil
 	})
-
-	if err != nil {
-		http.Error(w, http.StatusText(401), 401)
-		return
-	}
-
-	if token == nil || !token.Valid {
-		http.Error(w, http.StatusText(401), 401)
-		return
-	}
 
 	tasks := data.GetTasks(claims["_id"].(string))
 
@@ -54,29 +45,19 @@ func (rs ToDoListResource) ListTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs ToDoListResource) GetTask(w http.ResponseWriter, r *http.Request) {
-	token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
+	token, _ := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
 	claims := jwt.MapClaims{}
 
 	jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
 		return nil, nil
 	})
 
-	if err != nil {
-		http.Error(w, http.StatusText(401), 401)
-		return
-	}
-
-	if token == nil || !token.Valid {
-		http.Error(w, http.StatusText(401), 401)
-		return
-	}
-
 	id := chi.URLParam(r, "id")
 
 	task, err := data.GetTask(id, claims["_id"].(string))
 
 	if err != nil {
-		http.Error(w, http.StatusText(404), 404)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -87,7 +68,7 @@ func (rs ToDoListResource) CreateTask(w http.ResponseWriter, r *http.Request) {
 	task, err := data.CreateTask(r.Body)
 
 	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -99,7 +80,7 @@ func (rs ToDoListResource) CompleteTask(w http.ResponseWriter, r *http.Request) 
 	task, err := data.CompleteTask(id)
 
 	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -111,7 +92,7 @@ func (rs ToDoListResource) UndoTask(w http.ResponseWriter, r *http.Request) {
 	task, err := data.UndoTask(id)
 
 	if err != nil {
-		http.Error(w, http.StatusText(404), 404)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -124,7 +105,7 @@ func (rs ToDoListResource) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	task, err := data.DeleteTask(id)
 
 	if err != nil {
-		http.Error(w, http.StatusText(404), 404)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -135,7 +116,7 @@ func (rs ToDoListResource) LoginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := data.GetUserByCredentials(r.Body)
 
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -146,7 +127,7 @@ func (rs ToDoListResource) SignUpUser(w http.ResponseWriter, r *http.Request) {
 	user, err := data.CreateUser(r.Body)
 
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		render.JSON.BadRequest(w, err)
 		return
 	}
 
@@ -168,24 +149,32 @@ func CustomAuthenticator(next http.Handler) http.Handler {
 		token, err := jwtauth.VerifyRequest(tokenAuth, r, jwtauth.TokenFromHeader)
 		claims := jwt.MapClaims{}
 
+		errorMsg := "You do not have permission, you must provide a valid token"
+		message := render.NewHTTPError(errorMsg, errorMsg, http.StatusUnauthorized)
+
+		if err != nil {
+			render.JSON.Response(w, http.StatusUnauthorized, message)
+			return
+		}
+
 		jwt.ParseWithClaims(token.Raw, claims, func(token *jwt.Token) (i interface{}, e error) {
 			return nil, nil
 		})
 
 		if err != nil {
-			http.Error(w, http.StatusText(401), 401)
+			render.JSON.Response(w, http.StatusUnauthorized, message)
 			return
 		}
 
 		if token == nil || !token.Valid {
-			http.Error(w, http.StatusText(401), 401)
+			render.JSON.Response(w, http.StatusUnauthorized, message)
 			return
 		}
 
 		err = data.GetUser(claims["_id"].(string))
 
 		if err != nil {
-			http.Error(w, http.StatusText(404), 404)
+			render.JSON.NotFound(w, fmt.Errorf("User not found"))
 			return
 		}
 
